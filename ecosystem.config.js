@@ -3,7 +3,7 @@ module.exports = {
     name: 'thai-lottery-api',
     script: 'bun',
     args: 'run src/index.ts',
-    cwd: '/Users/htinlinnphyo/Documents/thai-lottery/thai-lotto-api',
+    cwd: './',
     instances: 1,
     autorestart: true,
     watch: false,
