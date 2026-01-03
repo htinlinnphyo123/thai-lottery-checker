@@ -3,6 +3,7 @@ import { cors } from '@elysiajs/cors'
 import { swagger } from '@elysiajs/swagger'
 import { logger } from '@bogeychan/elysia-logger'
 import { dts } from 'elysia-remote-dts'
+import { staticPlugin } from '@elysiajs/static'
 
 import { getList } from './functions/getList'
 import { getLotto } from './functions/getLotto'
@@ -19,6 +20,7 @@ testConnection()
 
 const app = new Elysia()
   .use(cors())
+  .use(staticPlugin())
   .use(dts('./src/index.ts'))
   .use(
     swagger({
@@ -27,7 +29,7 @@ const app = new Elysia()
   )
   .use(logger())
   .model(model)
-  .get('/', ({ set }) => (set.redirect = '/swagger'))
+  .get('/', () => Bun.file('public/index.html'))
   .get('/ping', () => ({
     status: 'success',
     response: 'pong',
