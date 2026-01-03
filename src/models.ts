@@ -63,6 +63,59 @@ export const model = {
       description: 'Default error when API is unable to process the request',
     }
   ),
+  'lottery.check.request': t.Object(
+    {
+      numbers: t.Array(t.String(), {
+        minItems: 1,
+        description: 'Array of lottery ticket numbers to check',
+      }),
+    },
+    {
+      description: 'Request body for checking lottery tickets',
+    }
+  ),
+  'lottery.check.response': t.Object(
+    {
+      status: t.String({
+        default: 'success',
+      }),
+      response: t.Object({
+        drawDate: t.String(),
+        results: t.Array(
+          t.Object({
+            ticketNumber: t.String(),
+            isWinner: t.Boolean(),
+            matches: t.Array(
+              t.Object({
+                prizeId: t.String(),
+                prizeName: t.String(),
+                reward: t.String(),
+                matchedNumber: t.String(),
+                matchType: t.String(),
+              })
+            ),
+            totalReward: t.Number(),
+          })
+        ),
+      }),
+    },
+    {
+      description: 'Response with lottery checking results',
+    }
+  ),
+  'lottery.save.response': t.Object(
+    {
+      status: t.String(),
+      response: t.Object({
+        message: t.String(),
+        drawId: t.String(),
+        drawDate: t.String(),
+      }),
+    },
+    {
+      description: 'Response after saving lottery data',
+    }
+  ),
 }
 
 export interface Model {
@@ -72,5 +125,14 @@ export interface Model {
   }
   api: {
     error: UnwrapSchema<typeof model['api.error']>
+  }
+  lottery: {
+    check: {
+      request: UnwrapSchema<typeof model['lottery.check.request']>
+      response: UnwrapSchema<typeof model['lottery.check.response']>
+    }
+    save: {
+      response: UnwrapSchema<typeof model['lottery.save.response']>
+    }
   }
 }

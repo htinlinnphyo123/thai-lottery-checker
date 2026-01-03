@@ -7,6 +7,15 @@ import { dts } from 'elysia-remote-dts'
 import { getList } from './functions/getList'
 import { getLotto } from './functions/getLotto'
 import { model } from './models'
+import { testConnection } from './config/database'
+import {
+  saveLotteryData,
+  getLatestLotteryFromDB,
+} from './services/lotteryStorage'
+import { checkTickets } from './services/lotteryChecker'
+
+// Test database connection on startup
+testConnection()
 
 const app = new Elysia()
   .use(cors())
@@ -169,6 +178,127 @@ const app = new Elysia()
         detail: {
           summary: 'Latest price annoucement',
           tags: ['lotto'],
+        },
+      },
+    }
+  )
+  .get(
+    '/save-latest-lottery',
+    async ({ set }) => {
+      try {
+        // Get latest lottery from the list
+        const latestLottery = await getList(1)
+        const drawId = latestLottery[0].id
+
+        // Fetch full lottery data
+        const lotto = await getLotto(drawId)
+
+        // Check if result is incomplete
+        if (
+          lotto.prizes.some(prize =>
+            prize.number.some(num => num.toLowerCase().includes('x'))
+          )
+        ) {
+          set.status = 400
+          return {
+            status: 'error',
+            response: {
+              message: 'Latest lottery result is incomplete',
+              drawId,
+              drawDate: lotto.date,
+            },
+          }
+        }
+
+        // Save to database
+        await saveLotteryData(drawId, lotto)
+
+        return {
+          status: 'success',
+          response: {
+            message: 'Lottery data saved successfully',
+            drawId,
+            drawDate: lotto.date,
+          },
+        }
+      } catch (e) {
+        console.error('Error saving lottery:', e)
+        set.status = 500
+        return {
+          status: 'crash',
+          response: {
+            message: 'Failed to save lottery data',
+            drawId: '',
+            drawDate: '',
+          },
+        }
+      }
+    },
+    {
+      response: {
+        200: 'lottery.save.response',
+        400: 'lottery.save.response',
+        500: 'lottery.save.response',
+      },
+      schema: {
+        detail: {
+          summary: 'Fetch and save latest lottery data to database',
+          tags: ['lottery'],
+        },
+      },
+    }
+  )
+  .post(
+    '/check-lottery-ticket',
+    async ({ body, set }) => {
+      try {
+        // Get latest lottery from database
+        const lotteryData = await getLatestLotteryFromDB()
+
+        if (!lotteryData) {
+          set.status = 404
+          return {
+            status: 'error',
+            response: {
+              drawDate: '',
+              results: [],
+            },
+          }
+        }
+
+        // Check tickets
+        const results = checkTickets(body.numbers, lotteryData)
+
+        return {
+          status: 'success',
+          response: {
+            drawDate: lotteryData.date,
+            results,
+          },
+        }
+      } catch (e) {
+        console.error('Error checking tickets:', e)
+        set.status = 500
+        return {
+          status: 'crash',
+          response: {
+            drawDate: '',
+            results: [],
+          },
+        }
+      }
+    },
+    {
+      body: 'lottery.check.request',
+      response: {
+        200: 'lottery.check.response',
+        404: 'lottery.check.response',
+        500: 'lottery.check.response',
+      },
+      schema: {
+        detail: {
+          summary: 'Check lottery tickets against latest draw',
+          tags: ['lottery'],
         },
       },
     }
