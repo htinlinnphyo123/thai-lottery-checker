@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ตรวจหวย - Thai Lottery Checker</title>
+    <title>Lottery Checker - Check Your Numbers</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -299,13 +299,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎰 ตรวจหวย</h1>
-            <p>Thai Lottery Checker</p>
+            <h1>🎰 Lottery Checker</h1>
+            <p>Check Your Winning Numbers</p>
         </div>
 
         <div class="card">
             <div class="input-section">
-                <label class="input-label">กรอกเลขหวยของคุณ (6 หลัก)</label>
+                <label class="input-label">Enter Your Lottery Number (6 digits)</label>
                 <input 
                     type="text" 
                     id="lotteryNumber" 
@@ -315,12 +315,12 @@
                     inputmode="numeric"
                     pattern="[0-9]*"
                 >
-                <div class="input-hint">กรอกตัวเลข 6 หลัก</div>
+                <div class="input-hint">Enter 6 digits</div>
             </div>
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <p>กำลังตรวจสอบ...</p>
+                <p>Checking...</p>
             </div>
 
             <div class="error-message" id="errorMessage"></div>
@@ -337,7 +337,7 @@
                 <div class="draw-info" id="drawInfo"></div>
 
                 <button class="check-another" id="checkAnother">
-                    ตรวจเลขอื่น
+                    Check Another Number
                 </button>
             </div>
         </div>
@@ -387,7 +387,7 @@
             const number = numberInput.value;
             
             if (number.length !== 6) {
-                showError('กรุณากรอกเลขหวย 6 หลัก');
+                showError('Please enter a 6-digit lottery number');
                 return;
             }
 
@@ -412,11 +412,11 @@
                 if (data.status === 'success' && data.response.results.length > 0) {
                     displayResult(data.response.results[0], data.response.drawDate);
                 } else {
-                    showError('ไม่สามารถตรวจสอบได้ กรุณาลองใหม่อีกครั้ง');
+                    showError('Unable to check. Please try again');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showError('เกิดข้อผิดพลาด กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+                showError('An error occurred. Please check your internet connection');
             } finally {
                 loading.classList.remove('active');
             }
@@ -437,8 +437,8 @@
                 // Winner!
                 resultHeader.className = 'result-header winner';
                 resultIcon.textContent = '🎉';
-                resultTitle.textContent = 'ยินดีด้วย! ถูกรางวัล!';
-                resultSubtitle.textContent = `เลข ${ticketResult.ticketNumber}`;
+                resultTitle.textContent = 'Congratulations! You Won!';
+                resultSubtitle.textContent = `Number ${ticketResult.ticketNumber}`;
 
                 // Display prizes
                 ticketResult.matches.forEach(match => {
@@ -446,15 +446,15 @@
                     prizeItem.className = 'prize-item';
                     
                     const matchTypeText = {
-                        'full': 'ถูกเลขเต็ม',
-                        'front3': 'ถูกเลขหน้า 3 ตัว',
-                        'back3': 'ถูกเลขท้าย 3 ตัว',
-                        'back2': 'ถูกเลขท้าย 2 ตัว'
+                        'full': 'Full Match',
+                        'front3': 'Front 3 Digits',
+                        'back3': 'Back 3 Digits',
+                        'back2': 'Back 2 Digits'
                     };
 
                     prizeItem.innerHTML = `
                         <div class="prize-name">${match.prizeName}</div>
-                        <div class="prize-amount">${parseInt(match.reward).toLocaleString('th-TH')} บาท</div>
+                        <div class="prize-amount">${parseInt(match.reward).toLocaleString('en-US')} Baht</div>
                         <div class="prize-details">${matchTypeText[match.matchType]} (${match.matchedNumber})</div>
                     `;
                     prizeContainer.appendChild(prizeItem);
@@ -464,8 +464,8 @@
                 const totalDiv = document.createElement('div');
                 totalDiv.className = 'total-reward';
                 totalDiv.innerHTML = `
-                    <div class="total-label">รางวัลรวมทั้งหมด</div>
-                    <div class="total-amount">${ticketResult.totalReward.toLocaleString('th-TH')} ฿</div>
+                    <div class="total-label">Total Prize</div>
+                    <div class="total-amount">${ticketResult.totalReward.toLocaleString('en-US')} ฿</div>
                 `;
                 prizeContainer.appendChild(totalDiv);
 
@@ -477,13 +477,13 @@
                 // Not a winner
                 resultHeader.className = 'result-header loser';
                 resultIcon.textContent = '😔';
-                resultTitle.textContent = 'เสียใจด้วย ไม่ถูกรางวัล';
-                resultSubtitle.textContent = `เลข ${ticketResult.ticketNumber}`;
+                resultTitle.textContent = 'Sorry, No Win This Time';
+                resultSubtitle.textContent = `Number ${ticketResult.ticketNumber}`;
 
                 prizeContainer.innerHTML = `
                     <div style="text-align: center; padding: 30px; color: #999;">
-                        <p style="font-size: 16px;">ไม่ถูกรางวัลในครั้งนี้</p>
-                        <p style="font-size: 14px; margin-top: 10px;">โชคดีครั้งหน้า! 🍀</p>
+                        <p style="font-size: 16px;">No winning numbers this time</p>
+                        <p style="font-size: 14px; margin-top: 10px;">Better luck next time! 🍀</p>
                     </div>
                 `;
 
@@ -494,7 +494,7 @@
             }
 
             // Draw info
-            drawInfo.textContent = `งวดวันที่ ${drawDate}`;
+            drawInfo.textContent = `Draw Date: ${drawDate}`;
 
             // Show result
             result.classList.add('active');
