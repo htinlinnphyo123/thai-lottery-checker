@@ -460,11 +460,6 @@
                     <div class="total-amount">${ticketResult.totalReward.toLocaleString('en-US')} ฿</div>
                 `;
                 prizeContainer.appendChild(totalDiv);
-
-                // Haptic feedback for Telegram
-                if (tg?.HapticFeedback) {
-                    tg.HapticFeedback.notificationOccurred('success');
-                }
             } else {
                 // Not a winner
                 resultHeader.className = 'result-header loser';
@@ -478,11 +473,6 @@
                         <p style="font-size: 14px; margin-top: 10px;">Better luck next time! 🍀</p>
                     </div>
                 `;
-
-                // Haptic feedback for Telegram
-                if (tg?.HapticFeedback) {
-                    tg.HapticFeedback.notificationOccurred('error');
-                }
             }
 
             // Draw info
@@ -499,11 +489,6 @@
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.classList.add('active');
-            
-            // Haptic feedback for Telegram
-            if (tg?.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('error');
-            }
         }
 
         // Auto-focus input on load
