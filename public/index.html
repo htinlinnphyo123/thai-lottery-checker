@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lottery Checker - Check Your Numbers</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -359,47 +358,6 @@
         const errorMessage = document.getElementById('errorMessage');
         const checkAnotherBtn = document.getElementById('checkAnother');
 
-        // Adsgram configuration
-        const ADSGRAM_BLOCK_ID = '20520';
-        let checkCounter = parseInt(localStorage.getItem('lotteryCheckCount') || '0');
-        let AdController;
-
-        // Initialize Adsgram
-        function initAdsgram() {
-            if (window.Adsgram) {
-                AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
-                console.log('✅ Adsgram initialized');
-            } else {
-                console.warn('⚠️ Adsgram SDK not loaded');
-            }
-        }
-
-        // Show ad after every 5 checks
-        function maybeShowAd() {
-            checkCounter++;
-            localStorage.setItem('lotteryCheckCount', checkCounter.toString());
-            
-            console.log(`Check count: ${checkCounter}`);
-            
-            if (checkCounter % 5 === 0 && AdController) {
-                console.log('🎬 Showing ad...');
-                AdController.show()
-                    .then(() => {
-                        console.log('✅ Ad shown successfully');
-                        // Reward user or continue
-                    })
-                    .catch((error) => {
-                        console.log('❌ Ad error:', error);
-                        // Continue anyway if ad fails
-                    });
-            }
-        }
-
-        // Initialize Adsgram when page loads
-        window.addEventListener('load', () => {
-            initAdsgram();
-        });
-
         // Format number input
         numberInput.addEventListener('input', (e) => {
             // Only allow numbers
@@ -453,9 +411,6 @@
 
                 if (data.status === 'success' && data.response.results.length > 0) {
                     displayResult(data.response.results[0], data.response.drawDate);
-                    
-                    // Maybe show ad after check
-                    maybeShowAd();
                 } else {
                     showError('Unable to check. Please try again');
                 }
