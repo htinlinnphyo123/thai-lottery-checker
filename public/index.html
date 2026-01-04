@@ -6,7 +6,7 @@
     <title>Lottery Checker - Check Your Numbers</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -498,15 +498,15 @@
                 <button class="close-camera" id="closeCamera">×</button>
             </div>
 
-            <div id="adPrompt" class="ad-prompt">
+            <!-- TEMPORARILY HIDDEN FOR TESTING -->
+            <div id="adPrompt" class="ad-prompt" style="display: none;">
                 <h3>🎬 Premium Feature</h3>
-                <p>Watch a short ad to unlock camera scanning</p>
+                <p>Watch a short ad to unlock camera view</p>
                 <button class="watch-ad-button" id="watchAdButton">Watch Ad to Unlock</button>
             </div>
 
             <div id="cameraContent" style="display: none;">
-                <video id="video" autoplay playsinline></video>
-                <canvas id="canvas"></canvas>
+                <div id="qr-reader" style="width: 100%; border-radius: 12px; overflow: hidden;"></div>
                 <div class="scanning-status active" id="scanningStatus">📷 Point camera at QR code...</div>
             </div>
         </div>
@@ -534,17 +534,13 @@
         const watchAdButton = document.getElementById('watchAdButton');
         const adPrompt = document.getElementById('adPrompt');
         const cameraContent = document.getElementById('cameraContent');
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
         const scanningStatus = document.getElementById('scanningStatus');
 
         // Adsgram configuration
         const ADSGRAM_BLOCK_ID = '20520';
         let AdController;
         let cameraUnlocked = localStorage.getItem('cameraUnlocked') === 'true';
-        let stream = null;
-        let scanning = false;
-        let animationFrameId = null;
+        let html5QrCode = null;
 
         // Initialize Adsgram
         function initAdsgram() {
@@ -565,6 +561,13 @@
         cameraButton.addEventListener('click', () => {
             cameraModal.classList.add('active');
             
+            // TEMPORARILY DISABLED FOR TESTING - Skip ad and open camera directly
+            cameraUnlocked = true; // Force unlock for testing
+            adPrompt.style.display = 'none';
+            cameraContent.style.display = 'block';
+            startCamera();
+            
+            /* ORIGINAL CODE - UNCOMMENT TO RE-ENABLE ADS
             if (cameraUnlocked) {
                 adPrompt.style.display = 'none';
                 cameraContent.style.display = 'block';
@@ -573,6 +576,7 @@
                 adPrompt.style.display = 'block';
                 cameraContent.style.display = 'none';
             }
+            */
         });
 
         // Close camera modal
@@ -609,102 +613,108 @@
             startCamera();
         }
 
-        // Start camera
+        // Start camera with QR scanner
         async function startCamera() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
-                });
-                video.srcObject = stream;
+                html5QrCode = new Html5Qrcode("qr-reader");
                 
-                // Wait for video to be ready, then start scanning
-                video.addEventListener('loadedmetadata', () => {
-                    startScanning();
-                });
+                const config = { 
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                };
+                
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                );
+                
+                console.log('✅ QR Scanner started');
             } catch (error) {
                 console.error('Camera error:', error);
                 alert('Unable to access camera. Please check permissions.');
             }
         }
 
-        // Stop camera
-        function stopCamera() {
-            scanning = false;
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-        }
-
-        // Start continuous QR scanning
-        function startScanning() {
-            scanning = true;
-            scanningStatus.textContent = '📷 Point camera at QR code...';
-            scanFrame();
-        }
-
-        // Scan each frame for QR code
-        function scanFrame() {
-            if (!scanning) return;
-
-            const context = canvas.getContext('2d');
+        // QR code scan success
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log('QR Code detected:', decodedText);
+            scanningStatus.textContent = '✅ QR Code found!';
             
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-                if (code) {
-                    console.log('QR Code found:', code.data);
-                    handleQRCode(code.data);
-                    return; // Stop scanning after finding code
-                }
-            }
-
-            // Continue scanning
-            animationFrameId = requestAnimationFrame(scanFrame);
-        }
-
-        // Handle detected QR code
-        function handleQRCode(qrData) {
-            scanning = false; // Stop scanning
-            scanningStatus.textContent = '✅ QR Code detected!';
+            // Stop scanning
+            stopCamera();
             
-            // Parse Thai lottery QR format: 69-01-31-126414-1631
-            const parts = qrData.split('-');
+            // Extract lottery number
+            const lotteryNumber = extractLotteryNumber(decodedText);
             
-            if (parts.length >= 4) {
-                const lotteryNumber = parts[3]; // Get 126414
+            if (lotteryNumber) {
+                // Set input and check
+                numberInput.value = lotteryNumber;
+                numberInput.classList.add('valid');
                 
-                if (lotteryNumber && lotteryNumber.length === 6 && /^\d{6}$/.test(lotteryNumber)) {
-                    // Valid 6-digit lottery number
-                    numberInput.value = lotteryNumber;
-                    numberInput.classList.add('valid');
+                // Close modal
+                setTimeout(() => {
+                    cameraModal.classList.remove('active');
                     
-                    // Close modal
-                    setTimeout(() => {
-                        cameraModal.classList.remove('active');
-                        stopCamera();
-                        
-                        // Auto-check
-                        setTimeout(() => checkLottery(), 300);
-                    }, 500);
-                } else {
-                    alert('Invalid lottery number format in QR code.');
-                    scanning = true;
-                    scanFrame(); // Resume scanning
-                }
+                    // Auto-check
+                    setTimeout(() => checkLottery(), 300);
+                }, 500);
             } else {
-                alert('QR code format not recognized. Expected format: XX-XX-XX-XXXXXX-XXXX');
-                scanning = true;
-                scanFrame(); // Resume scanning
+                alert('Could not extract lottery number from QR code.\n\nScanned: ' + decodedText);
+                cameraModal.classList.remove('active');
+            }
+        }
+
+        // QR code scan failure (just continue scanning)
+        function onScanFailure(error) {
+            // Ignore scan failures, keep scanning
+        }
+
+        // Extract lottery number from QR data
+        function extractLotteryNumber(qrData) {
+            console.log('Extracting from:', qrData);
+            
+            // Strategy 1: Dash-separated format (69-01-31-708016-1631)
+            if (qrData.includes('-')) {
+                const parts = qrData.split('-');
+                for (let part of parts) {
+                    if (part.length === 6 && /^\d{6}$/.test(part)) {
+                        console.log('Found 6-digit in parts:', part);
+                        return part;
+                    }
+                }
+            }
+            
+            // Strategy 2: Find any 6-digit number
+            const match = qrData.match(/\b\d{6}\b/);
+            if (match) {
+                console.log('Found with regex:', match[0]);
+                return match[0];
+            }
+            
+            // Strategy 3: Extract first 6 consecutive digits
+            const digitsOnly = qrData.replace(/\D/g, '');
+            if (digitsOnly.length >= 6) {
+                const number = digitsOnly.substring(0, 6);
+                console.log('Extracted first 6 digits:', number);
+                return number;
+            }
+            
+            return null;
+        }
+
+        // Stop camera
+        async function stopCamera() {
+            if (html5QrCode) {
+                try {
+                    await html5QrCode.stop();
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                } catch (error) {
+                    console.error('Error stopping camera:', error);
+                }
             }
         }
 
