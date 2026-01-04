@@ -498,10 +498,9 @@
                 <button class="close-camera" id="closeCamera">×</button>
             </div>
 
-            <!-- TEMPORARILY HIDDEN FOR TESTING -->
-            <div id="adPrompt" class="ad-prompt" style="display: none;">
+            <div id="adPrompt" class="ad-prompt">
                 <h3>🎬 Premium Feature</h3>
-                <p>Watch a short ad to unlock camera view</p>
+                <p>Watch a short ad to unlock QR scanner</p>
                 <button class="watch-ad-button" id="watchAdButton">Watch Ad to Unlock</button>
             </div>
 
@@ -561,13 +560,6 @@
         cameraButton.addEventListener('click', () => {
             cameraModal.classList.add('active');
             
-            // TEMPORARILY DISABLED FOR TESTING - Skip ad and open camera directly
-            cameraUnlocked = true; // Force unlock for testing
-            adPrompt.style.display = 'none';
-            cameraContent.style.display = 'block';
-            startCamera();
-            
-            /* ORIGINAL CODE - UNCOMMENT TO RE-ENABLE ADS
             if (cameraUnlocked) {
                 adPrompt.style.display = 'none';
                 cameraContent.style.display = 'block';
@@ -576,7 +568,6 @@
                 adPrompt.style.display = 'block';
                 cameraContent.style.display = 'none';
             }
-            */
         });
 
         // Close camera modal
