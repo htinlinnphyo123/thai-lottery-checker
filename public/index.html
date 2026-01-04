@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lottery Checker - Check Your Numbers</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -294,6 +296,147 @@
             background: #667eea;
             color: white;
         }
+
+        .camera-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .camera-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .camera-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .camera-modal.active {
+            display: flex;
+        }
+
+        .camera-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .camera-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .close-camera {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #video {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .capture-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .scanning-status {
+            text-align: center;
+            padding: 15px;
+            color: #667eea;
+            font-weight: 600;
+            display: none;
+        }
+
+        .scanning-status.active {
+            display: block;
+        }
+
+        .ad-prompt {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .ad-prompt h3 {
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+
+        .ad-prompt p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .watch-ad-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -317,6 +460,10 @@
                 >
                 <div class="input-hint">Enter 6 digits</div>
             </div>
+
+            <button class="camera-button" id="cameraButton">
+                📷 Scan Lottery Ticket
+            </button>
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
@@ -343,6 +490,28 @@
         </div>
     </div>
 
+    <!-- Camera Modal -->
+    <div class="camera-modal" id="cameraModal">
+        <div class="camera-container">
+            <div class="camera-header">
+                <div class="camera-title">📷 Scan Lottery Ticket</div>
+                <button class="close-camera" id="closeCamera">×</button>
+            </div>
+
+            <div id="adPrompt" class="ad-prompt">
+                <h3>🎬 Premium Feature</h3>
+                <p>Watch a short ad to unlock camera scanning</p>
+                <button class="watch-ad-button" id="watchAdButton">Watch Ad to Unlock</button>
+            </div>
+
+            <div id="cameraContent" style="display: none;">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas"></canvas>
+                <div class="scanning-status active" id="scanningStatus">📷 Point camera at QR code...</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Initialize Telegram WebApp
         const tg = window.Telegram?.WebApp;
@@ -357,6 +526,187 @@
         const result = document.getElementById('result');
         const errorMessage = document.getElementById('errorMessage');
         const checkAnotherBtn = document.getElementById('checkAnother');
+
+        // Camera elements
+        const cameraButton = document.getElementById('cameraButton');
+        const cameraModal = document.getElementById('cameraModal');
+        const closeCamera = document.getElementById('closeCamera');
+        const watchAdButton = document.getElementById('watchAdButton');
+        const adPrompt = document.getElementById('adPrompt');
+        const cameraContent = document.getElementById('cameraContent');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const scanningStatus = document.getElementById('scanningStatus');
+
+        // Adsgram configuration
+        const ADSGRAM_BLOCK_ID = '20520';
+        let AdController;
+        let cameraUnlocked = localStorage.getItem('cameraUnlocked') === 'true';
+        let stream = null;
+        let scanning = false;
+        let animationFrameId = null;
+
+        // Initialize Adsgram
+        function initAdsgram() {
+            if (window.Adsgram) {
+                AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID,debug: true });
+                console.log('✅ Adsgram initialized');
+            } else {
+                console.warn('⚠️ Adsgram SDK not loaded');
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initAdsgram();
+        });
+
+        // Open camera modal
+        cameraButton.addEventListener('click', () => {
+            cameraModal.classList.add('active');
+            
+            if (cameraUnlocked) {
+                adPrompt.style.display = 'none';
+                cameraContent.style.display = 'block';
+                startCamera();
+            } else {
+                adPrompt.style.display = 'block';
+                cameraContent.style.display = 'none';
+            }
+        });
+
+        // Close camera modal
+        closeCamera.addEventListener('click', () => {
+            cameraModal.classList.remove('active');
+            stopCamera();
+        });
+
+        // Watch ad to unlock camera
+        watchAdButton.addEventListener('click', async () => {
+            if (!AdController) {
+                alert('Ad system not available. Camera unlocked for free!');
+                unlockCamera();
+                return;
+            }
+
+            try {
+                await AdController.show();
+                console.log('✅ Ad watched successfully');
+                unlockCamera();
+            } catch (error) {
+                console.log('❌ Ad error:', error);
+                alert('Ad failed to load. Camera unlocked for free!');
+                unlockCamera();
+            }
+        });
+
+        // Unlock camera feature
+        function unlockCamera() {
+            cameraUnlocked = true;
+            localStorage.setItem('cameraUnlocked', 'true');
+            adPrompt.style.display = 'none';
+            cameraContent.style.display = 'block';
+            startCamera();
+        }
+
+        // Start camera
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = stream;
+                
+                // Wait for video to be ready, then start scanning
+                video.addEventListener('loadedmetadata', () => {
+                    startScanning();
+                });
+            } catch (error) {
+                console.error('Camera error:', error);
+                alert('Unable to access camera. Please check permissions.');
+            }
+        }
+
+        // Stop camera
+        function stopCamera() {
+            scanning = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }
+
+        // Start continuous QR scanning
+        function startScanning() {
+            scanning = true;
+            scanningStatus.textContent = '📷 Point camera at QR code...';
+            scanFrame();
+        }
+
+        // Scan each frame for QR code
+        function scanFrame() {
+            if (!scanning) return;
+
+            const context = canvas.getContext('2d');
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                if (code) {
+                    console.log('QR Code found:', code.data);
+                    handleQRCode(code.data);
+                    return; // Stop scanning after finding code
+                }
+            }
+
+            // Continue scanning
+            animationFrameId = requestAnimationFrame(scanFrame);
+        }
+
+        // Handle detected QR code
+        function handleQRCode(qrData) {
+            scanning = false; // Stop scanning
+            scanningStatus.textContent = '✅ QR Code detected!';
+            
+            // Parse Thai lottery QR format: 69-01-31-126414-1631
+            const parts = qrData.split('-');
+            
+            if (parts.length >= 4) {
+                const lotteryNumber = parts[3]; // Get 126414
+                
+                if (lotteryNumber && lotteryNumber.length === 6 && /^\d{6}$/.test(lotteryNumber)) {
+                    // Valid 6-digit lottery number
+                    numberInput.value = lotteryNumber;
+                    numberInput.classList.add('valid');
+                    
+                    // Close modal
+                    setTimeout(() => {
+                        cameraModal.classList.remove('active');
+                        stopCamera();
+                        
+                        // Auto-check
+                        setTimeout(() => checkLottery(), 300);
+                    }, 500);
+                } else {
+                    alert('Invalid lottery number format in QR code.');
+                    scanning = true;
+                    scanFrame(); // Resume scanning
+                }
+            } else {
+                alert('QR code format not recognized. Expected format: XX-XX-XX-XXXXXX-XXXX');
+                scanning = true;
+                scanFrame(); // Resume scanning
+            }
+        }
 
         // Format number input
         numberInput.addEventListener('input', (e) => {
