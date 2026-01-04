@@ -85,13 +85,6 @@
             background: #f1f8f4;
         }
 
-        .input-hint {
-            font-size: 13px;
-            color: #999;
-            margin-top: 8px;
-            text-align: center;
-        }
-
         .check-button {
             width: 100%;
             padding: 18px;
@@ -185,7 +178,7 @@
         }
 
         .result-icon {
-            font-size: 60px;
+            font-size: 50px;
             margin-bottom: 10px;
         }
 
@@ -196,7 +189,7 @@
         }
 
         .result-subtitle {
-            font-size: 14px;
+            font-size: 18px;
             opacity: 0.9;
         }
 
@@ -254,11 +247,10 @@
 
         .draw-info {
             text-align: center;
-            color: #999;
-            font-size: 13px;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
+            color: #000000;
+            font-size: 20px;
+            margin-top: 10px;
+            padding-top: 10px;
         }
 
         .error-message {
@@ -311,7 +303,7 @@
                     inputmode="numeric"
                     pattern="[0-9]*"
                 >
-                <div class="input-hint">Enter 6 digits</div>
+                <div class="draw-info" id="drawInfo"></div>
             </div>
 
             <div class="loading" id="loading">
@@ -329,9 +321,6 @@
                 </div>
 
                 <div id="prizeContainer"></div>
-
-                <div class="draw-info" id="drawInfo"></div>
-
                 <button class="check-another" id="checkAnother">
                     Check Another Number
                 </button>
@@ -466,13 +455,6 @@
                 resultIcon.textContent = '😔';
                 resultTitle.textContent = 'Sorry, No Win This Time';
                 resultSubtitle.textContent = `Number ${ticketResult.ticketNumber}`;
-
-                prizeContainer.innerHTML = `
-                    <div style="text-align: center; padding: 30px; color: #999;">
-                        <p style="font-size: 16px;">No winning numbers this time</p>
-                        <p style="font-size: 14px; margin-top: 10px;">Better luck next time! 🍀</p>
-                    </div>
-                `;
             }
 
             // Draw info
