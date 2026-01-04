@@ -281,6 +281,42 @@
             transition: all 0.3s ease;
         }
 
+        .coffee-section {
+            margin: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+        }
+
+        .coffee-section.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        .coffee-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #d63031;
+            margin-bottom: 10px;
+        }
+
+        .coffee-text {
+            font-size: 14px;
+            color: #2d3436;
+            margin-bottom: 15px;
+        }
+
+        .coffee-qr {
+            max-width: 200px;
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+
 
     </style>
 </head>
@@ -320,7 +356,19 @@
                     <div class="result-subtitle" id="resultSubtitle"></div>
                 </div>
 
+                <!-- Buy Me a Coffee Section -->
+                <div class="coffee-section" id="coffeeSection">
+                    <div class="coffee-title">☕ Congratulations on Your Win!</div>
+                    <p class="coffee-text">If you're feeling generous, buy me a coffee! 😊</p>
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <img src="/public/kbzpay.jpeg" alt="KBZ Pay QR Code" class="coffee-qr">
+                        <img src="/public/kbank.jpeg" alt="KBank QR Code" class="coffee-qr">
+                    </div>
+                </div>
+
                 <div id="prizeContainer"></div>
+
+
                 <button class="check-another" id="checkAnother">
                     Check Another Number
                 </button>
@@ -361,6 +409,7 @@
             numberInput.classList.remove('valid');
             result.classList.remove('active');
             errorMessage.classList.remove('active');
+            document.getElementById('coffeeSection').classList.remove('show');
             numberInput.focus();
         });
 
@@ -449,12 +498,18 @@
                     <div class="total-amount">${ticketResult.totalReward.toLocaleString('en-US')} ฿</div>
                 `;
                 prizeContainer.appendChild(totalDiv);
+
+                // Show coffee donation section for winners
+                document.getElementById('coffeeSection').classList.add('show');
             } else {
                 // Not a winner
                 resultHeader.className = 'result-header loser';
                 resultIcon.textContent = '😔';
                 resultTitle.textContent = 'Sorry, No Win This Time';
                 resultSubtitle.textContent = `Number ${ticketResult.ticketNumber}`;
+
+                // Hide coffee section for non-winners
+                document.getElementById('coffeeSection').classList.remove('show');
             }
 
             // Draw info
